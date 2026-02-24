@@ -9,24 +9,52 @@
 
 <header>
   <h1>📋 Ma DVDthèque</h1>
-  <a href="ajout.html" class="nav-btn">➕ Ajouter un DVD</a>
+  <a class="nav-btn" href="ajout.html">➕ Ajouter un DVD</a>
 </header>
 
-<div id="liste" class="grid"></div>
+<div class="card">
+  <button class="primary" onclick="ouvrirCSV()">📂 Ouvrir dvdtheque.csv</button>
+</div>
+
+<div id="grid" class="grid"></div>
 
 <script>
-const container = document.getElementById("liste");
-let dvds = JSON.parse(localStorage.getItem("dvds") || "[]");
+let fileHandle;
+let dvds = [];
+const grid = document.getElementById("grid");
+
+async function ouvrirCSV() {
+  [fileHandle] = await window.showOpenFilePicker({
+    types: [{ description: "DVDthèque", accept: { "text/csv": [".csv"] } }]
+  });
+
+  const file = await fileHandle.getFile();
+  const text = await file.text();
+  chargerCSV(text);
+  render();
+}
+
+function chargerCSV(text) {
+  const lines = text.split("\n").slice(1);
+  dvds = lines.filter(l => l.trim()).map(l => {
+    const v = l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(x => x.replace(/"/g, ""));
+    return {
+      titre:v[0], annee:v[1], genres:v[2], realisateurs:v[3],
+      pays:v[4], acteurs:v[5], palme:v[6], recompense:v[7],
+      duree:v[8], coffret:v[9], groupe:v[10],
+      prix:v[11], support:v[12]
+    };
+  });
+}
 
 function render() {
-  container.innerHTML = "";
+  grid.innerHTML = "";
   dvds.forEach((d, i) => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
+    const c = document.createElement("div");
+    c.className = "card";
+    c.innerHTML = `
       <h2>${d.titre}</h2>
-      <p><strong>${d.annee}</strong> • ${d.support}</p>
+      <p>${d.annee} • ${d.support}</p>
       <p>${d.genres}</p>
       <p>🎬 ${d.realisateurs}</p>
       <p>🌍 ${d.pays}</p>
@@ -36,19 +64,27 @@ function render() {
       <p>💰 ${d.prix} €</p>
       <button class="danger" onclick="supprimer(${i})">❌ Supprimer</button>
     `;
-    container.appendChild(card);
+    grid.appendChild(c);
   });
 }
 
-function supprimer(index) {
+async function sauvegarderCSV() {
+  const writable = await fileHandle.createWritable();
+  let csv = "Titre,Année,Genres,Realisateurs,Pays,Acteurs,PalmeOr,AutreRecompense,Duree,Coffret,GroupeCoffret,Prix,Support\n";
+  dvds.forEach(d => {
+    csv += Object.values(d).map(v => `"${v || ""}"`).join(",") + "\n";
+  });
+  await writable.write(csv);
+  await writable.close();
+}
+
+async function supprimer(i) {
   if (confirm("Supprimer ce DVD ?")) {
-    dvds.splice(index, 1);
-    localStorage.setItem("dvds", JSON.stringify(dvds));
+    dvds.splice(i, 1);
+    await sauvegarderCSV();
     render();
   }
 }
-
-render();
 </script>
 
 </body>

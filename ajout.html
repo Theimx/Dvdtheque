@@ -9,85 +9,99 @@
 
 <header>
   <h1>📀 Ajouter un DVD</h1>
-  <a href="visualisation.html" class="nav-btn">📋 Voir la DVDthèque</a>
+  <a class="nav-btn" href="visualisation.html">📋 Voir la DVDthèque</a>
 </header>
 
-<form id="dvdForm" class="card">
+<div class="card">
+  <button class="primary" onclick="ouvrirCSV()">📂 Ouvrir dvdtheque.csv</button>
+  <p class="info">À faire une seule fois au démarrage</p>
+</div>
 
-  <label>Titre</label>
-  <input required id="titre">
-
-  <label>Année</label>
-  <input type="number" id="annee">
-
-  <label>Genre(s)</label>
-  <input id="genres">
-
-  <label>Réalisateur(s)</label>
-  <input id="realisateurs">
-
-  <label>Pays d'origine</label>
-  <input id="pays">
-
-  <label>Acteurs</label>
-  <input id="acteurs">
+<form id="form" class="card">
+  <input id="titre" placeholder="Titre" required>
+  <input id="annee" type="number" placeholder="Année">
+  <input id="genres" placeholder="Genres">
+  <input id="realisateurs" placeholder="Réalisateurs">
+  <input id="pays" placeholder="Pays d'origine">
+  <input id="acteurs" placeholder="Acteurs">
 
   <div class="checkbox">
     <label><input type="checkbox" id="palme"> Palme d'Or</label>
     <label><input type="checkbox" id="recompense"> Autre récompense</label>
   </div>
 
-  <label>Durée (minutes)</label>
-  <input type="number" id="duree">
+  <input id="duree" type="number" placeholder="Durée (minutes)">
+  <label><input type="checkbox" id="coffret"> Coffret</label>
+  <input id="groupe" placeholder="Nom du coffret">
 
-  <div class="checkbox">
-    <label><input type="checkbox" id="coffret"> Coffret</label>
-  </div>
-
-  <label>Nom du coffret</label>
-  <input id="groupe">
-
-  <label>Prix (€)</label>
-  <input type="number" step="0.01" id="prix">
-
-  <label>Support</label>
+  <input id="prix" type="number" step="0.01" placeholder="Prix (€)">
   <select id="support">
     <option>DVD</option>
     <option>Blu-ray</option>
     <option>4K</option>
   </select>
 
-  <button type="submit" class="primary">➕ Ajouter</button>
+  <button class="primary">➕ Ajouter</button>
 </form>
 
 <script>
-const form = document.getElementById("dvdForm");
+let fileHandle;
+let dvds = [];
 
-form.addEventListener("submit", e => {
-  e.preventDefault();
-
-  const dvds = JSON.parse(localStorage.getItem("dvds") || "[]");
-
-  dvds.push({
-    titre: titre.value,
-    annee: annee.value,
-    genres: genres.value,
-    realisateurs: realisateurs.value,
-    pays: pays.value,
-    acteurs: acteurs.value,
-    palme: palme.checked ? "Oui" : "Non",
-    recompense: recompense.checked ? "Oui" : "Non",
-    duree: duree.value,
-    coffret: coffret.checked ? "Oui" : "Non",
-    groupe: groupe.value,
-    prix: prix.value,
-    support: support.value
+async function ouvrirCSV() {
+  [fileHandle] = await window.showOpenFilePicker({
+    types: [{ description: "DVDthèque", accept: { "text/csv": [".csv"] } }]
   });
 
-  localStorage.setItem("dvds", JSON.stringify(dvds));
+  const file = await fileHandle.getFile();
+  const text = await file.text();
+  chargerCSV(text);
+}
+
+function chargerCSV(text) {
+  const lines = text.split("\n").slice(1);
+  dvds = lines.filter(l => l.trim()).map(l => {
+    const v = l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(x => x.replace(/"/g, ""));
+    return {
+      titre:v[0], annee:v[1], genres:v[2], realisateurs:v[3],
+      pays:v[4], acteurs:v[5], palme:v[6], recompense:v[7],
+      duree:v[8], coffret:v[9], groupe:v[10],
+      prix:v[11], support:v[12]
+    };
+  });
+}
+
+async function sauvegarderCSV() {
+  const writable = await fileHandle.createWritable();
+  let csv = "Titre,Année,Genres,Realisateurs,Pays,Acteurs,PalmeOr,AutreRecompense,Duree,Coffret,GroupeCoffret,Prix,Support\n";
+  dvds.forEach(d => {
+    csv += Object.values(d).map(v => `"${v || ""}"`).join(",") + "\n";
+  });
+  await writable.write(csv);
+  await writable.close();
+}
+
+form.onsubmit = async e => {
+  e.preventDefault();
+  dvds.push({
+    titre:titre.value,
+    annee:annee.value,
+    genres:genres.value,
+    realisateurs:realisateurs.value,
+    pays:pays.value,
+    acteurs:acteurs.value,
+    palme:palme.checked ? "Oui" : "Non",
+    recompense:recompense.checked ? "Oui" : "Non",
+    duree:duree.value,
+    coffret:coffret.checked ? "Oui" : "Non",
+    groupe:groupe.value,
+    prix:prix.value,
+    support:support.value
+  });
+  await sauvegarderCSV();
   form.reset();
-  alert("DVD ajouté !");
-});
+  alert("DVD ajouté et sauvegardé !");
+};
 </script>
 
 </body>
