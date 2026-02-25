@@ -8,7 +8,8 @@ A web app to manage and visualize the state of your DVD colection.
    
 ---
 ### *How to use* :   
-- First open the **ajout.html** file in your browser and upload the **dvdtheque.csv** file then fill the data from your colection.
+- First download the project to use it locally.
+- Open the **ajout.html** file in your browser and upload the **dvdtheque.csv** file then fill the data from your colection.
 - Now you can see and browse through your DVD library with the **visualisation.html** file.
   
 ---
