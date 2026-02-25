@@ -19,4 +19,5 @@ A web app to manage and visualize the state of your DVD colection.
    <img src="readme/view.png" width="900">
    
 </p>
+   
 ---
