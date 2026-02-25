@@ -15,5 +15,7 @@ A web app to manage and visualize the state of your DVD colection.
 ---
 ### *Visual* :
 <p align="center">
-  <img src="readme/add.png" width="900">
+   <img src="readme/add.png" width="900">
+   <img src="readme/view.png" width="900">
+   
 </p>
